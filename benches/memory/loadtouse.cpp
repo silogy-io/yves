@@ -51,12 +51,11 @@ template <uint64_t size, uint64_t stride> struct StridedPtrChase {
   }
 };
 
-constexpr auto RSS_AS_KB = RSS * 1024 / sizeof(uint64_t);
-constexpr auto array = StridedPtrChase<RSS_AS_KB, STRIDE>();
 // number of loads that need to occur to stride across the entire working set
 // size
+constexpr auto RSS_AS_KB = RSS * 1024 / sizeof(uint64_t);
 constexpr auto LOADS_PER_ITERATION = RSS * 1024 / STRIDE;
-
+constexpr auto array = StridedPtrChase<RSS_AS_KB, STRIDE>();
 static_assert(LOADS_PER_ITERATION % UNROLL_FACTOR == 0,
               "Unroll factor MUST must divide loads per iteration evenly");
 
