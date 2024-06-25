@@ -30,14 +30,20 @@ class download_zig(Target):
 
     def gen_script(self) -> List[str]:
         zigos, zigisa = download_zig.get_zigos_and_isa()
+        compiler_path = self.get_outputs()["compiler"]
 
         return [
+            f"cd {self.ws_path}",
+            f'if [ ! -f "{compiler_path}" ]; then',
             f"curl -o zig.tar.xz https://ziglang.org/download/{self.zig_version}/zig-{zigos}-{zigisa}-{self.zig_version}.tar.xz && tar xvf zig.tar.xz",
+            "fi",
         ]
 
     def get_outputs(self) -> Dict[str, str]:
         zigos, zigisa = download_zig.get_zigos_and_isa()
-        return dict(compiler=f"zig-{zigos}-{zigisa}-{self.zig_version}/zig")
+        return dict(
+            compiler=f"{self.ws_path}/zig-{zigos}-{zigisa}-{self.zig_version}/zig"
+        )
 
 
 @dataclass
@@ -82,7 +88,7 @@ class compile_local_ubench_zig(Target):
 
         bin_name = self.bin_name()
         return [
-            f"./{self.compiler_path} {zig_cmd} {param_str} {self.opt_flags} {self.benchmark_path} -o {bin_name}"
+            f"{self.compiler_path} {zig_cmd} {param_str} {self.opt_flags} {self.benchmark_path} -o {bin_name}"
         ]
 
     def get_outputs(self) -> Dict[str, str]:

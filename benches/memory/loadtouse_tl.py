@@ -1,13 +1,15 @@
-from pysmelt.importer import Target, init_local_rules
+from pysmelt.generators.procedural import init_local_rules
+from pysmelt.interfaces.procedural import import_as_target
 from pysmelt.default_targets import raw_bash_build
 from pysmelt.path_utils import get_git_root
+
 
 mod = init_local_rules()
 
 from compile import download_zig, compile_local_ubench_zig
 from macos_profiler import mac_local_benchmark
 
-cpp_compiler = download_zig(name="cpp_compiler")
+cpp_compiler = import_as_target("//download_zig.smelt.yaml:cpp_compiler")
 compiler_path = cpp_compiler.get_outputs()["compiler"]
 
 bench_name = "loadtouse.cpp"
@@ -23,7 +25,7 @@ mac_sources = " ".join([f"{src_path}/cJSON.c", f"{src_path}/mac_profiler.c"])
 profile_obj = raw_bash_build(
     name="build_mac_profiler",
     cmds=[
-        f"./{compiler_path} cc -march=native -O3 -fPIC -shared {mac_sources} -o profile.so"
+        f"{compiler_path} cc -march=native -O3 -fPIC -shared {mac_sources} -o profile.so"
     ],
     deps=[cpp_compiler.as_ref],
     outputs={"profile_bin": "profile.so"},

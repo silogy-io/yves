@@ -1,6 +1,10 @@
 from dataclasses import dataclass, field
 import pathlib
-from pysmelt.interfaces import Target, SmeltFilePath, SmeltTargetType, TargetRef
+from pysmelt.interfaces import (
+    RuntimeRequirements,
+    Target,
+    SmeltTargetType,
+)
 from typing import List, Dict, Optional, Tuple
 import platform
 
@@ -23,3 +27,10 @@ class mac_local_benchmark(Target):
     def get_outputs(self) -> Dict[str, str]:
         ctr_file = pathlib.Path(self.benchmark_path).with_suffix(".json").name
         return dict(counters=ctr_file)
+
+    def runtime_requirements(self) -> RuntimeRequirements:
+        rr = RuntimeRequirements.default()
+        # Force the cpu requirement to be very high so only one benchmark runs
+        # at a time
+        rr.num_cpus = 1024
+        return rr
