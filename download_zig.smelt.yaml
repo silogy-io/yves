@@ -1,0 +1,4 @@
+- name: "cpp_compiler"
+  rule: download_zig
+- name: "cpp_compiler2"
+  rule: download_zig
