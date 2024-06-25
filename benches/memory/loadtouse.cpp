@@ -24,6 +24,8 @@
 #define RSS 32
 #endif
 
+#define RUNTIME_INIT_SIZE 2048
+
 #ifndef STRIDE
 #define STRIDE 32
 #endif
@@ -36,6 +38,14 @@
 #define UNROLL_FACTOR 8
 #endif
 
+constexpr void init_mem(uint64_t *payload, uint64_t size, uint64_t stride) {
+  auto stride_as_word = stride;
+
+  for (auto i = 0; i < size; i++) {
+    payload[i] = (i * sizeof(uint64_t) + stride_as_word) % size;
+  }
+}
+
 // Stride is declared in bytes
 template <uint64_t size, uint64_t stride> struct StridedPtrChase {
   uint64_t payload[size];
@@ -45,9 +55,7 @@ template <uint64_t size, uint64_t stride> struct StridedPtrChase {
     static_assert(stride >= sizeof(uint64_t),
                   "Memory stride must be greater than the size of a uint64_t");
     auto stride_as_word = stride;
-    for (auto i = 0; i < size; i++) {
-      payload[i] = (i * sizeof(uint64_t) + stride_as_word) % size;
-    }
+    init_mem(payload, size, stride);
   }
 };
 
@@ -55,7 +63,6 @@ template <uint64_t size, uint64_t stride> struct StridedPtrChase {
 // size
 constexpr auto RSS_AS_KB = RSS * 1024 / sizeof(uint64_t);
 constexpr auto LOADS_PER_ITERATION = RSS * 1024 / STRIDE;
-constexpr auto array = StridedPtrChase<RSS_AS_KB, STRIDE>();
 static_assert(LOADS_PER_ITERATION % UNROLL_FACTOR == 0,
               "Unroll factor MUST must divide loads per iteration evenly");
 
@@ -75,8 +82,20 @@ struct LoadFunroller {
 };
 
 int main() {
+
+#if RSS < RUNTIME_INIT_SIZE
+  constexpr auto array = StridedPtrChase<RSS_AS_KB, STRIDE>();
+
   const volatile uint64_t *p = &array.payload[0];
   const volatile uint64_t *baseline = &array.payload[0];
+#else
+  auto array = new uint64_t[RSS_AS_KB];
+  init_mem(array, RSS_AS_KB, STRIDE);
+
+  const volatile uint64_t *p = &array[0];
+  const volatile uint64_t *baseline = &array[0];
+
+#endif
 
   for (int i = 0; i < ITERATIONS; i++) {
     for (int j = 0; j < LOADS_PER_ITERATION; j++) {

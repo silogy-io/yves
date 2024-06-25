@@ -24,11 +24,12 @@ mac_sources = " ".join([f"{src_path}/cJSON.c", f"{src_path}/mac_profiler.c"])
 
 profile_obj = raw_bash_build(
     name="build_mac_profiler",
+    # TODO FIXME:
     cmds=[
-        f"{compiler_path} cc -march=native -O3 -fPIC -shared {mac_sources} -o profile.so"
+        f"{compiler_path} cc -march=native -O3 -fPIC -shared {mac_sources} -o $SMELT_ROOT/smelt-out/build_mac_profiler/profile.so"
     ],
     deps=[cpp_compiler.as_ref],
-    outputs={"profile_bin": "profile.so"},
+    outputs={"profile_bin": "$SMELT_ROOT/smelt-out/build_mac_profiler/profile.so"},
 )
 
 
