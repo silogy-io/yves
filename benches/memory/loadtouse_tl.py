@@ -13,7 +13,7 @@ cpp_compiler = import_as_target("//download_zig.smelt.yaml:cpp_compiler")
 compiler_path = cpp_compiler.get_outputs()["compiler"]
 
 bench_name = "loadtouse.cpp"
-sizes = [2**n for n in range(2, 4)]
+
 iterations = 100
 
 
@@ -35,7 +35,7 @@ profile_obj = raw_bash_build(
 
 profiler_bin = profile_obj.get_outputs()["profile_bin"]
 
-
+sizes = [2**n for n in range(2, 14)]
 for size in sizes:
     benchmark = compile_local_ubench_zig(
         name=f"local_ptr_chase_{size}_kb",
