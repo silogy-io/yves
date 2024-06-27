@@ -19,21 +19,31 @@
  */
 
 #include <cstdint>
+#define RUNTIME_INIT_SIZE 2048
 
+// The working set size, in kilobytes, used to configure how much memory is
+// accessed for a particular test
 #ifndef RSS
 #define RSS 32
 #endif
 
-#define RUNTIME_INIT_SIZE 2048
-
+// The access stride, in bytes, used for any linear access test --
 #ifndef STRIDE
-#define STRIDE 32
+#define STRIDE 64
 #endif
 
-#ifndef ITERATIOS
+// the iteration count of a kernel -- e.g. for a memset test, if iterations is
+// 1000, then memset is called 1000 times
+#ifndef ITERATIONS
 #define ITERATIONS 1000
 #endif
 
+// unroll factor inside a kernel -- determines the amount an instruction is
+// replicated inside a kernel loop e.g. if we are measuring latency of ADD, and
+// have an UNROLL_FACTOR of 8, then there will be 8 add instructions for each
+// iteration of the kernel
+//
+// Useful for tuning the ratio of the behaviour under load to the loop backedge
 #ifndef UNROLL_FACTOR
 #define UNROLL_FACTOR 8
 #endif
@@ -99,7 +109,7 @@ int main() {
 
   for (int i = 0; i < ITERATIONS; i++) {
     for (int j = 0; j < LOADS_PER_ITERATION; j++) {
-      p = LoadFunroller<1>::generate(baseline, p);
+      p = LoadFunroller<0>::generate(baseline, p);
     }
   }
 }

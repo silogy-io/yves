@@ -1,4 +1,5 @@
 
+
 #include <cstdint>
 
 #pragma once
@@ -12,6 +13,8 @@
 #ifndef RAND_SEED
 #define RAND_SEED 0xbdac'f99b'3f7a'1bb4ULL
 #endif
+
+#define RUNTIME_INIT_SIZE 1024
 
 // just iterating over the macros will always result in same
 // number because the internal state is only updated for each occurance
@@ -127,7 +130,7 @@ namespace Dynlec
 #endif
 
 
-#ifndef ITERATIOS
+#ifndef ITERATIONS
 #define ITERATIONS 1000
 #endif
 
@@ -191,21 +194,35 @@ struct LoadFunroller {
                                            const volatile uint64_t *p) {
     p = reinterpret_cast<const volatile uint64_t *>(
         reinterpret_cast<uint64_t>(baseline) + *p);
-    if constexpr (depth < UNROLL_FACTOR) {
+    if constexpr (depth + 1 < UNROLL_FACTOR) {
       return LoadFunroller<depth + 1>::generate(baseline, p);
     } else {
       return p;
     }
   }
 };
-constexpr auto array = RandomPtrChase<RSS_AS_KB>();
+
 int main() {
+
+#if RSS < RUNTIME_INIT_SIZE
+
+ 
+  constexpr auto array = RandomPtrChase<RSS_AS_KB>();
   const volatile uint64_t *p = &array.payload[0];
   const volatile uint64_t *baseline = &array.payload[0];
+#else
+  auto array = new uint64_t[RSS_AS_KB];
+  randomize(array, RSS_AS_KB);
 
+  const volatile uint64_t *p = &array[0];
+  const volatile uint64_t *baseline = &array[0];
+
+#endif
+
+  
   for (int i = 0; i < ITERATIONS; i++) {
     for (int j = 0; j < LOADS_PER_ITERATION; j++) {
-      p = LoadFunroller<1>::generate(baseline, p);
+      p = LoadFunroller<0>::generate(baseline, p);
     }
   }
 }

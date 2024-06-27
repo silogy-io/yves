@@ -74,8 +74,9 @@ class compile_local_ubench_zig(Target):
             return []
 
     def gen_script(self) -> List[str]:
+
         param_str = " ".join(
-            [f"-D{KEY}={VALUE}" for KEY, VALUE in self.ubench_parameters.values()]
+            [f"-D{KEY}={VALUE}" for KEY, VALUE in self.ubench_parameters.items()]
         )
         bmpath = pathlib.Path(self.benchmark_path)
 

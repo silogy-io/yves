@@ -25,7 +25,7 @@ class mac_local_benchmark(Target):
         return [f"DYLD_INSERT_LIBRARIES={self.profiler_path} {self.benchmark_path}"]
 
     def get_outputs(self) -> Dict[str, str]:
-        ctr_file = pathlib.Path(self.benchmark_path).with_suffix(".json").name
+        ctr_file = self.ws_path + "/counters.json"
         return dict(counters=ctr_file)
 
     def runtime_requirements(self) -> RuntimeRequirements:

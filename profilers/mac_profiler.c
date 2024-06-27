@@ -1109,27 +1109,22 @@ char *create_counter_str(void) {
     goto end;
   }
 
-  counters = cJSON_CreateArray();
-  if (counters == NULL) {
-    goto end;
-  }
-  cJSON_AddItemToObject(top, "counters", counters);
+  // counters = cJSON_CreateArray();
+  // if (counters == NULL) {
+  //   goto end;
+  // }
+
   const usize ev_count = sizeof(profile_events) / sizeof(profile_events[0]);
   for (usize i = 0; i < ev_count; i++) {
     const event_alias *alias = profile_events + i;
     usize idx = counter_map[i];
     u64 val = counters_1[idx] - counters_0[idx];
     const char *name = alias->alias;
-    counter = cJSON_CreateObject();
-    if (counter == NULL) {
-      goto end;
-    }
-    cJSON_AddItemToArray(counters, counter);
     counter_val = cJSON_CreateNumber(val);
     if (counter_val == NULL) {
       goto end;
     }
-    cJSON_AddItemToObject(counter, name, counter_val);
+    cJSON_AddItemToObject(top, name, counter_val);
   }
 
   string = cJSON_Print(top);
@@ -1163,22 +1158,15 @@ void __attribute__((destructor)) run_me_at_unload() {
   kpc_force_all_ctrs_set(0);
   const usize ev_count = sizeof(profile_events) / sizeof(profile_events[0]);
 
-  //// result
-  // char json_name[PATH_MAX + 50];
-  // sprintf(json_name, "%s", prog_name);
+  char *target_root = getenv("TARGET_ROOT");
+  char json_name[PATH_MAX + 50];
+  sprintf(json_name, "%s/counters.json", target_root);
+  printf("file name is %s", json_name);
 
-  //// Find the last occurrence of "."
-  // suffix = strrchr(json_name, '.');
-
-  //// If the suffix is ".elf", replace it with ".counters.json"
-  // if (suffix != NULL && strcmp(suffix, ".elf") == 0) {
-  //   strcpy(suffix, ".json");
-  // }
-
-  // FILE *file = fopen(json_name, "w");
-  // if (file == NULL) {
-  //   printf("Error opening file for counters!\n");
-  // }
+  FILE *file = fopen(json_name, "w");
+  if (file == NULL) {
+    printf("Error opening file for counters!\n");
+  }
 
   // printf("counters value:\n");
 
@@ -1186,7 +1174,7 @@ void __attribute__((destructor)) run_me_at_unload() {
 
   printf("%s\n", json_str);
 
-  // fputs(json_str, file);
+  fputs(json_str, file);
 
-  // fclose(file);
+  fclose(file);
 }
