@@ -78,13 +78,13 @@ static_assert(LOADS_PER_ITERATION % UNROLL_FACTOR == 0,
 
 template <uint64_t depth>
 // explicit load unroller
-struct LoadFunroller {
+struct InstFunroller {
   static const volatile uint64_t *generate(const volatile uint64_t *baseline,
                                            const volatile uint64_t *p) {
     p = reinterpret_cast<const volatile uint64_t *>(
         reinterpret_cast<uint64_t>(baseline) + *p);
     if constexpr (depth < UNROLL_FACTOR) {
-      return LoadFunroller<depth + 1>::generate(baseline, p);
+      return InstFunroller<depth + 1>::generate(baseline, p);
     } else {
       return p;
     }
@@ -109,7 +109,7 @@ int main() {
 
   for (int i = 0; i < ITERATIONS; i++) {
     for (int j = 0; j < LOADS_PER_ITERATION; j++) {
-      p = LoadFunroller<0>::generate(baseline, p);
+      p = InstFunroller<0>::generate(baseline, p);
     }
   }
 }
