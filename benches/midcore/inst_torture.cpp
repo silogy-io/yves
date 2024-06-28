@@ -30,17 +30,14 @@
 #endif
 
 #ifndef INST_CONTENT
-#define INST_CONTENT nop
+#define INST_CONTENT "nop"
 #endif
-
-#define STRINGIFY(x) #x
-#define TOSTRING(x) STRINGIFY(x)
 
 template <uint64_t depth>
 // explicit load unroller
 struct InstFunroller {
   static const volatile void generate() {
-    asm volatile(TOSTRING(INST_CONTENT));
+    asm volatile(INST_CONTENT);
 
     if constexpr (depth < UNROLL_FACTOR) {
       return InstFunroller<depth + 1>::generate();

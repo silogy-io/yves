@@ -1,12 +1,45 @@
-from dataclasses import dataclass, field
-import pathlib
+from dataclasses import dataclass
+
+from pysmelt.default_targets import TargetRef
 from pysmelt.interfaces import (
     RuntimeRequirements,
     Target,
     SmeltTargetType,
 )
-from typing import List, Dict, Optional, Tuple
-import platform
+from typing import List, Dict
+
+from pysmelt.interfaces.procedural import import_as_target
+
+
+@dataclass
+class build_mac_profiler(Target):
+    compiler_download: TargetRef
+    mac_sources: List[str]
+
+    def get_dependencies(self) -> List[TargetRef]:
+        return [self.compiler_download]
+
+    @staticmethod
+    def rule_type() -> SmeltTargetType:
+        return SmeltTargetType.Build
+
+    @property
+    def profiler_path(self) -> str:
+        return f"{self.ws_path}/profiler.so"
+
+    def gen_script(self) -> List[str]:
+        srcs = " ".join(self.mac_sources)
+
+        compiler_rule = import_as_target(self.compiler_download)
+
+        compiler_path = compiler_rule.get_outputs()["compiler"]
+
+        return [
+            f"{compiler_path} cc -march=native -O3 -fPIC -shared {srcs} -o {self.ws_path}/profiler.so"
+        ]
+
+    def get_outputs(self) -> Dict[str, str]:
+        return dict(profile_bin=self.profiler_path)
 
 
 @dataclass

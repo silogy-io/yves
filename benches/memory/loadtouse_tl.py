@@ -7,7 +7,7 @@ from pysmelt.default_targets import test_group
 
 mod = init_local_rules()
 
-from compile import download_zig, compile_local_ubench_zig
+from compile import compile_local_ubench_zig
 from macos_profiler import mac_local_benchmark
 
 cpp_compiler = import_as_target("//download_zig.smelt.yaml:cpp_compiler")
@@ -17,20 +17,7 @@ compiler_path = cpp_compiler.get_outputs()["compiler"]
 iterations = 10
 
 
-src_path = f"{get_git_root()}/profilers"
-
-mac_sources = " ".join([f"{src_path}/cJSON.c", f"{src_path}/mac_profiler.c"])
-
-
-profile_obj = raw_bash_build(
-    name="build_mac_profiler",
-    # TODO FIXME:
-    cmds=[
-        f"{compiler_path} cc -march=native -O3 -fPIC -shared {mac_sources} -o $SMELT_ROOT/smelt-out/build_mac_profiler/profile.so"
-    ],
-    deps=[cpp_compiler.as_ref],
-    outputs={"profile_bin": "$SMELT_ROOT/smelt-out/build_mac_profiler/profile.so"},
-)
+profile_obj = import_as_target("//profilers/buildmac.smelt.yaml:mac_profiler")
 
 
 profiler_bin = profile_obj.get_outputs()["profile_bin"]

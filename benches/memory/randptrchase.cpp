@@ -1,20 +1,51 @@
-
+/* A random pointer chase through memory
+ *
+ * For working set sizes less than 1024KB, constexpr is used to initialize the array
+ *
+ * 
+ *
+ */
 
 #include <cstdint>
 
-#pragma once
 
-#include <cstdint>
+// The working set size, in kilobytes, used to configure how much memory is
+// accessed 
+#ifndef RSS
+#define RSS 32
+#endif
 
-// all numbers are generated randomly at compile time. the internal state is pseudo
-// remembered using the counter macro. the seed is based on time using the timestamp
+
+// Number of times we iterate through the test
+
+#ifndef ITERATIONS
+#define ITERATIONS 1000
+#endif
+
+// unroll factor inside a kernel -- determines the amount of loads to backedges 
+//
+// Useful for tuning the ratio of the behaviour under load to the loop backedge
+#ifndef UNROLL_FACTOR
+#define UNROLL_FACTOR 8
+#endif
+
+#define RUNTIME_INIT_SIZE 1024
+
+
+
+
+
+
+
+
+// all numbers are generated randomly using compile time. the internal state is pseudo
 // and time macro. additionally a custom random seed can be specified to fully rely
 
 #ifndef RAND_SEED
 #define RAND_SEED 0xbdac'f99b'3f7a'1bb4ULL
 #endif
 
-#define RUNTIME_INIT_SIZE 1024
+
 
 // just iterating over the macros will always result in same
 // number because the internal state is only updated for each occurance
@@ -125,18 +156,6 @@ namespace Dynlec
 
 #include <cstdint>
 
-#ifndef RSS
-#define RSS 32
-#endif
-
-
-#ifndef ITERATIONS
-#define ITERATIONS 1000
-#endif
-
-#ifndef UNROLL_FACTOR
-#define UNROLL_FACTOR 8
-#endif
 
 constexpr auto RSS_AS_KB = RSS * 1024 / sizeof(uint64_t);
 constexpr auto STRIDE = 8;
@@ -219,7 +238,6 @@ int main() {
 
 #endif
 
-  
   for (int i = 0; i < ITERATIONS; i++) {
     for (int j = 0; j < LOADS_PER_ITERATION; j++) {
       p = LoadFunroller<0>::generate(baseline, p);

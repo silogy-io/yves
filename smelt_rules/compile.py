@@ -64,7 +64,7 @@ class compile_local_ubench_zig(Target):
         return SmeltTargetType.Stimulus
 
     def bin_name(self) -> str:
-        binary_name = f"$SMELT_ROOT/smelt-out/{self.name}/" + self.name + ".elf"
+        binary_name = f"$SMELT_ROOT/smelt-out/{self.name}/" + self.name + ".el"
         return str(binary_name)
 
     def get_dependencies(self) -> List[TargetRef]:

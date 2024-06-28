@@ -14,6 +14,11 @@ cpp_compiler = import_as_target("//download_zig.smelt.yaml:cpp_compiler")
 compiler_path = cpp_compiler.get_outputs()["compiler"]
 
 
+def format_for_define(inst: str) -> str:
+    inst = inst.replace(" ", "\\ ")
+    return f'\\"{inst}\\"'
+
+
 iterations = 10
 
 
@@ -36,7 +41,11 @@ profile_obj = raw_bash_build(
 profiler_bin = profile_obj.get_outputs()["profile_bin"]
 
 
-name_to_torture = {"nop": "nop"}
+name_to_torture = {
+    "nop": "nop",
+    "add_bw": "add x1, x2, x2",
+    "add_latency": "add x1, x1, x1",
+}
 
 nextlinebench = "inst_torture.cpp"
 next_line_tests = []
@@ -45,7 +54,7 @@ for tname, inst in name_to_torture.items():
         name=f"{tname}_torture",
         compiler_path=compiler_path,
         benchmark_path=nextlinebench,
-        ubench_parameters={"INST_CONTENT": f'"{inst}"'},
+        ubench_parameters={"INST_CONTENT": format_for_define(inst)},
         compiler_target=cpp_compiler.as_ref,
     )
     bench_bin = benchmark.get_outputs()["binary"]
