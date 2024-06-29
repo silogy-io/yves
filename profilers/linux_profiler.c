@@ -1,6 +1,8 @@
 
+#include "cJSON.h"
 #include <asm/unistd.h>
 #include <linux/perf_event.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -72,4 +74,56 @@ void __attribute__((destructor)) run_me_at_unload() {
 
     close(fd[i]);
   }
+}
+
+char *create_counter_str(void) {
+  char *string = NULL;
+
+  cJSON *counters = NULL;
+  cJSON *counter = NULL;
+  cJSON *counter_val = NULL;
+
+  size_t index = 0;
+
+  int i;
+  long long count[MAX_EVENTS];
+  for (i = 0; i < num_events; i++) {
+    ioctl(fd[i], PERF_EVENT_IOC_DISABLE, 0);
+    read(fd[i], &count[i], sizeof(long long));
+
+    printf("Event %d: %lld\n", i, count[i]);
+
+    close(fd[i]);
+  }
+
+  cJSON *top = cJSON_CreateObject();
+  if (top == NULL) {
+    goto end;
+  }
+
+  // counters = cJSON_CreateArray();
+  // if (counters == NULL) {
+  //   goto end;
+  // }
+
+  for (uint64_t i = 0; i < num_events; i++) {
+    const linux_event_alias *alias = profile_events + i;
+
+    uint64_t val = count[i];
+    const char *name = alias->alias;
+    counter_val = cJSON_CreateNumber(val);
+    if (counter_val == NULL) {
+      goto end;
+    }
+    cJSON_AddItemToObject(top, name, counter_val);
+  }
+
+  string = cJSON_Print(top);
+  if (string == NULL) {
+    fprintf(stderr, "Failed to put monitors to str.\n");
+  }
+
+end:
+  cJSON_Delete(top);
+  return string;
 }
