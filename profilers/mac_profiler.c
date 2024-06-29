@@ -885,6 +885,11 @@ static const event_alias profile_events[] = {
          "BR_MISP_RETIRED.ALL_BRANCHES", // Intel Core 2th-10th
          "BR_INST_RETIRED.MISPRED",      // Intel Yonah, Merom
      }},
+    {"l1d-ld-misses",
+     {"L1D_CACHE_MISS_LD_NONSPEC"
+
+     }},
+
 };
 
 static kpep_event *get_event(kpep_db *db, const event_alias *alias) {

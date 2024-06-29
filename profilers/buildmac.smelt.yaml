@@ -1,0 +1,7 @@
+- name: mac_profiler
+  rule: build_mac_profiler
+  rule_args:
+    compiler_download: //download_zig.smelt.yaml:cpp_compiler
+    mac_sources:
+      - mac_profiler.c
+      - cJSON.c

@@ -57,7 +57,7 @@ class compile_local_ubench_zig(Target):
 
     this is fed to the compile in the format of -D{KEY}={VALUE}
     """
-    opt_flags: str = "-march=native -O3"
+    opt_flags: str = "-march=native -O3 -ftemplate-depth=4096"
 
     @staticmethod
     def rule_type() -> SmeltTargetType:

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import json
 
 from pysmelt.default_targets import TargetRef
 from pysmelt.interfaces import (
@@ -6,7 +7,7 @@ from pysmelt.interfaces import (
     Target,
     SmeltTargetType,
 )
-from typing import List, Dict
+from typing import Any, List, Dict, Optional
 
 from pysmelt.interfaces.procedural import import_as_target
 
@@ -46,6 +47,7 @@ class build_mac_profiler(Target):
 class mac_local_benchmark(Target):
     profiler_path: str
     benchmark_path: str
+    metadata: Optional[Dict[str, Any]] = None
 
     def get_dependent_files(self) -> List[str]:
         return [self.profiler_path, self.benchmark_path]
@@ -55,11 +57,20 @@ class mac_local_benchmark(Target):
         return SmeltTargetType.Test
 
     def gen_script(self) -> List[str]:
-        return [f"DYLD_INSERT_LIBRARIES={self.profiler_path} {self.benchmark_path}"]
+        metadata = self.metadata if self.metadata else {}
+        metadata_content = f"'{json.dumps(metadata)}'"
+        return [
+            f"echo {metadata_content} &> {self.metadata_out()}",
+            f"DYLD_INSERT_LIBRARIES={self.profiler_path} {self.benchmark_path}",
+        ]
+
+    def metadata_out(self) -> str:
+        return self.ws_path + "/metadata.json"
 
     def get_outputs(self) -> Dict[str, str]:
         ctr_file = self.ws_path + "/counters.json"
-        return dict(counters=ctr_file)
+
+        return dict(counters=ctr_file, metadata=self.metadata_out())
 
     def runtime_requirements(self) -> RuntimeRequirements:
         rr = RuntimeRequirements.default()
