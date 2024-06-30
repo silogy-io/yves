@@ -16,8 +16,7 @@ if rob_tests:
         cycles = counters[counters.CYCLES]
         misses = metadata["TOTAL_MISSES"]
 
-        print(cycles)
-        print(cycles / misses)
-        print(counters.cpi)
+        print(f"{test.test_name}: {cycles / misses}")
+
 else:
     raise RuntimeError("Could not find shit! These tests didn't run ")

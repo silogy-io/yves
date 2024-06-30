@@ -1,6 +1,7 @@
 
 #include "cJSON.h"
 #include <asm/unistd.h>
+#include <linux/limits.h>
 #include <linux/perf_event.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -53,26 +54,14 @@ void __attribute__((constructor)) run_me_at_load_time() {
 
     fd[i] = perf_event_open(&pe[i], 0, -1, -1, 0);
     if (fd[i] == -1) {
-      fprintf(stderr, "Error opening event %d\n", i);
+      fprintf(stderr,
+              "Error opening event %s -- have you set perf event paranoid? \n",
+              profile_events[i].alias);
       exit(EXIT_FAILURE);
     }
 
     ioctl(fd[i], PERF_EVENT_IOC_RESET, 0);
     ioctl(fd[i], PERF_EVENT_IOC_ENABLE, 0);
-  }
-}
-
-void __attribute__((destructor)) run_me_at_unload() {
-
-  int i;
-  long long count[MAX_EVENTS];
-  for (i = 0; i < num_events; i++) {
-    ioctl(fd[i], PERF_EVENT_IOC_DISABLE, 0);
-    read(fd[i], &count[i], sizeof(long long));
-
-    printf("Event %d: %lld\n", i, count[i]);
-
-    close(fd[i]);
   }
 }
 
@@ -90,9 +79,6 @@ char *create_counter_str(void) {
   for (i = 0; i < num_events; i++) {
     ioctl(fd[i], PERF_EVENT_IOC_DISABLE, 0);
     read(fd[i], &count[i], sizeof(long long));
-
-    printf("Event %d: %lld\n", i, count[i]);
-
     close(fd[i]);
   }
 
@@ -126,4 +112,24 @@ char *create_counter_str(void) {
 end:
   cJSON_Delete(top);
   return string;
+}
+
+void __attribute__((destructor)) run_me_at_unload() {
+  char *json_str = create_counter_str();
+
+  char *target_root = getenv("TARGET_ROOT");
+  char json_name[PATH_MAX + 50];
+  sprintf(json_name, "%s/counters.json", target_root);
+  printf("file name is %s", json_name);
+
+  FILE *file = fopen(json_name, "w");
+  if (file == NULL) {
+    printf("Error opening file for counters!\n");
+  }
+
+  printf("%s\n", json_str);
+
+  fputs(json_str, file);
+
+  fclose(file);
 }

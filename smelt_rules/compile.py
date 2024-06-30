@@ -19,8 +19,12 @@ class download_zig(Target):
         zigos, zigisa = None, None
         if os == "Darwin":
             zigos = "macos"
+        elif os == "Linux":
+            zigos = "linux"
         if isa == "arm64":
             zigisa = "aarch64"
+        elif isa == "x86_64":
+            zigisa = "x86_64"
 
         if zigos is None or zigisa is None:
             raise NotImplementedError(

@@ -1,16 +1,17 @@
 from pysmelt.generators.procedural import init_local_rules
 from pysmelt.interfaces.procedural import import_as_target
-from pysmelt.default_targets import raw_bash_build
-from pysmelt.path_utils import get_git_root
 from pysmelt.default_targets import test_group
 
 
 mod = init_local_rules()
 
-from compile import download_zig, compile_local_ubench_zig
-from macos_profiler import mac_local_benchmark
+from compile import compile_local_ubench_zig
+from profiler import local_benchmark
 
 cpp_compiler = import_as_target("//download_zig.smelt.yaml:cpp_compiler")
+profile_obj = import_as_target("//profilers/buildprof.smelt.yaml:profiler")
+
+
 compiler_path = cpp_compiler.get_outputs()["compiler"]
 
 
@@ -20,22 +21,7 @@ def format_for_define(inst: str) -> str:
 
 
 iterations = 10
-
-
-src_path = f"{get_git_root()}/profilers"
-
-mac_sources = " ".join([f"{src_path}/cJSON.c", f"{src_path}/mac_profiler.c"])
-
-
-profile_obj = raw_bash_build(
-    name="build_mac_profiler",
-    # TODO FIXME:
-    cmds=[
-        f"{compiler_path} cc -march=native -O3 -fPIC -shared {mac_sources} -o $SMELT_ROOT/smelt-out/build_mac_profiler/profile.so"
-    ],
-    deps=[cpp_compiler.as_ref],
-    outputs={"profile_bin": "$SMELT_ROOT/smelt-out/build_mac_profiler/profile.so"},
-)
+compiler_path = cpp_compiler.get_outputs()["compiler"]
 
 
 profiler_bin = profile_obj.get_outputs()["profile_bin"]
@@ -43,7 +29,6 @@ profiler_bin = profile_obj.get_outputs()["profile_bin"]
 
 name_to_torture = {
     "nop_bw": "nop",
-    "add_bw": "add x1, x2, x2",
 }
 
 nextlinebench = "inst_torture.cpp"
@@ -57,8 +42,8 @@ for tname, inst in name_to_torture.items():
         compiler_target=cpp_compiler.as_ref,
     )
     bench_bin = benchmark.get_outputs()["binary"]
-    bench = mac_local_benchmark(
-        name=f"{tname}_torture_mac",
+    bench = local_benchmark(
+        name=f"{tname}_torture_local",
         profiler_path=profiler_bin,
         benchmark_path=bench_bin,
         metadata={"content": inst},
@@ -78,11 +63,9 @@ potential_structure_sizes = [
     400,
     512,
     768,
-    1024,
 ]
 rob_chase_tests = []
-PAYLOADS_PER_ITER = 8
-TOTAL_ITER = 8000000
+TOTAL_ITER = 30000000
 inst = "add x12, x1, x1"
 # inst = "fadd d1, d2, d2"
 for potential_structure_size in potential_structure_sizes:
@@ -91,19 +74,17 @@ for potential_structure_size in potential_structure_sizes:
         compiler_path=compiler_path,
         benchmark_path=rob_bench,
         ubench_parameters={
-            "PAYLOAD_PER_ITERATION": PAYLOADS_PER_ITER,
             "ITERATIONS": TOTAL_ITER,
             "OPS_PER_MISS": potential_structure_size,
-            "INST_CONTENT": format_for_define(inst),
         },
         compiler_target=cpp_compiler.as_ref,
     )
     rob_bench_bin = rob_benchmark.get_outputs()["binary"]
-    bench = mac_local_benchmark(
+    bench = local_benchmark(
         name=f"{potential_structure_size}_rob_capacity_mac",
         profiler_path=profiler_bin,
         benchmark_path=rob_bench_bin,
-        metadata={"TOTAL_MISSES": PAYLOADS_PER_ITER * TOTAL_ITER},
+        metadata={"TOTAL_MISSES": 4 * TOTAL_ITER},
     )
     rob_chase_tests.append(bench.as_ref)
 test_group(name="rob_capacity_sweep", tests=rob_chase_tests)

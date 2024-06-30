@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import json
+import platform
 
 from pysmelt.default_targets import TargetRef
 from pysmelt.interfaces import (
@@ -13,9 +14,10 @@ from pysmelt.interfaces.procedural import import_as_target
 
 
 @dataclass
-class build_mac_profiler(Target):
+class local_profiler(Target):
     compiler_download: TargetRef
     mac_sources: List[str]
+    linux_sources: List[str]
 
     def get_dependencies(self) -> List[TargetRef]:
         return [self.compiler_download]
@@ -29,7 +31,11 @@ class build_mac_profiler(Target):
         return f"{self.ws_path}/profiler.so"
 
     def gen_script(self) -> List[str]:
-        srcs = " ".join(self.mac_sources)
+        osname = platform.system()
+        if osname == "Darwin":
+            srcs = " ".join(self.mac_sources)
+        elif osname == "Linux":
+            srcs = " ".join(self.linux_sources)
 
         compiler_rule = import_as_target(self.compiler_download)
 
@@ -44,7 +50,7 @@ class build_mac_profiler(Target):
 
 
 @dataclass
-class mac_local_benchmark(Target):
+class local_benchmark(Target):
     profiler_path: str
     benchmark_path: str
     metadata: Optional[Dict[str, Any]] = None
@@ -59,10 +65,15 @@ class mac_local_benchmark(Target):
     def gen_script(self) -> List[str]:
         metadata = self.metadata if self.metadata else {}
         metadata_content = f"'{json.dumps(metadata)}'"
-        return [
-            f"echo {metadata_content} &> {self.metadata_out()}",
-            f"DYLD_INSERT_LIBRARIES={self.profiler_path} {self.benchmark_path}",
-        ]
+        osname = platform.system()
+        if osname == "Darwin":
+            rv = f"DYLD_INSERT_LIBRARIES={self.profiler_path} {self.benchmark_path}"
+        elif osname == "Linux":
+            rv = f"LD_PRELOAD={self.profiler_path} {self.benchmark_path}"
+        else:
+            raise RuntimeError(f"Unsupported os {osname}")
+
+        return [f"echo {metadata_content} &> {self.metadata_out()}", f"{rv}"]
 
     def metadata_out(self) -> str:
         return self.ws_path + "/metadata.json"
