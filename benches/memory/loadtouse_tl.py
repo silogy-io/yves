@@ -1,4 +1,3 @@
-from pysmelt.generators.procedural import init_local_rules
 from pysmelt.interfaces.procedural import import_as_target
 from pysmelt.default_targets import test_group
 
@@ -34,12 +33,16 @@ for size in sizes:
         name=f"next_line_chase_{size}_kb_local",
         profiler_path=profiler_bin,
         benchmark_path=bench_bin,
+        metadata={"RSS_IN_KB": size},
     )
     next_line_tests.append(bench.as_ref)
-test_group(name="next_line_pointer_chase_tests", tests=next_line_tests)
+next_line_chase = test_group(
+    name="next_line_pointer_chase_tests", tests=next_line_tests
+)
 
+page_sizes = [2**n for n in range(5, 16)]
 next_page = []
-for size in sizes:
+for size in page_sizes:
     benchmark = compile_local_ubench_zig(
         name=f"next_page_chase_{size}_kb",
         compiler_path=compiler_path,
@@ -52,13 +55,17 @@ for size in sizes:
         name=f"next_page_chase_{size}_kb_local",
         profiler_path=profiler_bin,
         benchmark_path=bench_bin,
+        # this is in kb, so number of
+        metadata={"PAGES_TOUCHED": size / 4},
     )
     next_page.append(bench.as_ref)
-test_group(name="next_page_pointer_chase_tests", tests=next_page)
+dtlbtg = test_group(name="dtlb_latency_sweep", tests=next_page)
 
 
 random_chase_tests = []
 random_chase_bench = "randptrchase.cpp"
+
+
 for size in sizes:
     benchmark = compile_local_ubench_zig(
         name=f"rand_chase_{size}_kb",
@@ -72,6 +79,11 @@ for size in sizes:
         name=f"rand_chase_{size}_kb_local",
         profiler_path=profiler_bin,
         benchmark_path=bench_bin,
+        metadata={"RSS_IN_KB": size},
     )
     random_chase_tests.append(bench.as_ref)
-test_group(name="randptrchase", tests=random_chase_tests)
+rngtg = test_group(name="randptrchase", tests=random_chase_tests)
+
+mctg = test_group(
+    name="all_mem_tests", tests=[rngtg.as_ref, dtlbtg.as_ref, next_line_chase.as_ref]
+)

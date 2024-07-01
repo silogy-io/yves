@@ -1,18 +1,40 @@
 from dataclasses import dataclass
 from typing import List, Union
 from textual.app import App, ComposeResult, events, on
-from textual.containers import Container
+from textual.containers import Container, VerticalScroll
 from textual.widgets import (
     Footer,
     Header,
     Label,
     ListItem,
     ListView,
+    Static,
     TabPane,
     TabbedContent,
 )
 from textual_plotext import PlotextPlot
 from yves.analysis.helper import ExperimentGraph
+from rich.table import Table
+
+
+class ExperimentAsTable(Static):
+
+    def __init__(self, experiment: ExperimentGraph):
+        self.experiment = experiment
+        super().__init__()
+
+    def on_mount(self) -> None:
+        table = Table("Value name", "Value")
+        table.title = self.experiment.name
+        for (
+            x,
+            y,
+        ) in zip(self.experiment.x_values, self.experiment.y_values):
+
+            table.add_row(
+                f"{x} {self.experiment.x_label}", f"{y} {self.experiment.y_label}"
+            )
+        self.update(table)
 
 
 class YvesViz(App):
@@ -41,8 +63,10 @@ class YvesViz(App):
                     )
 
                     yield PlotextPlot(id="plotter")
-            with TabPane("Jessica", id="jessica"):
-                yield Label("dog2")
+            with TabPane("tables", id="jessica"):
+                with VerticalScroll():
+                    for exp in self.experiments:
+                        yield ExperimentAsTable(exp)
 
     @on(ListView.Selected, "#plot-list")
     def new_graph(self, message_type: ListView.Selected):
@@ -55,9 +79,12 @@ class YvesViz(App):
         plt.clear_data()
         plt.xlabel(plot_data.x_label)
         plt.ylabel(plot_data.y_label)
+        xticks = [float(i) for i in range(len(plot_data.x_values))]
+        xlabels = [str(xval) for xval in plot_data.x_values]
+        plt.xticks(xticks, xlabels)
 
         plt.title(plot_data.name)
-        plt.plot(plot_data.x_values, plot_data.y_values)
+        plt.plot(range(len(plot_data.x_values)), plot_data.y_values)
 
         var.refresh()
 

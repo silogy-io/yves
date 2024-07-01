@@ -9,8 +9,6 @@ from yves.analysis.helper import (
 )
 from yves.viz.viz import YvesViz
 
-iql = IQL.from_previous()
-
 
 def midcore_analysis(iql: IQL) -> List[ExperimentGraph]:
     rob_tests = iql.get_tests_from_testgroup("rob_capacity_sweep")
@@ -37,10 +35,12 @@ def midcore_analysis(iql: IQL) -> List[ExperimentGraph]:
         )
 
     else:
-        raise RuntimeError("Could not find shit! These tests didn't run ")
+        pass
     return exps
 
 
-rv = midcore_analysis(iql)
-print(rv)
-YvesViz(rv).run()
+if __name__ == "__main__":
+    iql = IQL.from_previous()
+    rv = midcore_analysis(iql)
+    print(rv)
+    YvesViz(rv).run()

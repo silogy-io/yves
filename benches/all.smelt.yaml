@@ -1,0 +1,6 @@
+- name: all_tests
+  rule: test_group
+  rule_args:
+    tests:
+      - //benches/memory/loadtouse_tl.py:all_mem_tests
+      - //benches/midcore/bandwidths_etc.py:all_mc_tests

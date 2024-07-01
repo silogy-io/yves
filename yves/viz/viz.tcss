@@ -1,13 +1,15 @@
 #plot-list{
    
     
-  
+
  
     dock: left;
+    width: 1fr;
     max-width: 20%;
 }
 
 
 #plotter {
-    
+  width: 100%;
+ 
 }

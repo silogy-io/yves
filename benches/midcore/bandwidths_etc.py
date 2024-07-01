@@ -1,12 +1,8 @@
-from pysmelt.generators.procedural import init_local_rules
 from pysmelt.interfaces.procedural import import_as_target
 from pysmelt.default_targets import test_group
+from yves.rules.compile import compile_local_ubench_zig
+from yves.rules.profiler import local_benchmark
 
-
-mod = init_local_rules()
-
-from compile import compile_local_ubench_zig
-from profiler import local_benchmark
 
 cpp_compiler = import_as_target("//download_zig.smelt.yaml:cpp_compiler")
 profile_obj = import_as_target("//profilers/buildprof.smelt.yaml:profiler")
@@ -67,7 +63,7 @@ potential_structure_sizes = [
 rob_chase_tests = []
 TOTAL_ITER = 30000000
 inst = "add x12, x1, x1"
-# inst = "fadd d1, d2, d2"
+
 for potential_structure_size in potential_structure_sizes:
     rob_benchmark = compile_local_ubench_zig(
         name=f"{potential_structure_size}_rob_capacity",
@@ -90,4 +86,6 @@ for potential_structure_size in potential_structure_sizes:
         },
     )
     rob_chase_tests.append(bench.as_ref)
-test_group(name="rob_capacity_sweep", tests=rob_chase_tests)
+robtg = test_group(name="rob_capacity_sweep", tests=rob_chase_tests)
+
+mctg = test_group(name="all_mc_tests", tests=[robtg.as_ref])

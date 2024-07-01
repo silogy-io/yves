@@ -12,7 +12,7 @@ class ExperimentGraph:
     name: str
     x_label: str
     y_label: str
-    x_values: List[int]
+    x_values: List[str]
     y_values: List[int]
 
 
