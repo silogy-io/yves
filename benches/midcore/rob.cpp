@@ -187,9 +187,11 @@ struct RobFunroller {
     }
     if constexpr (depth < OPS_PER_MISS) {
       if constexpr (depth != 0) {
+        asm volatile(INST_CONTENT);
 
-        uint64_t a;
-        DoNotOptimize(4 + 4);
+        // int c;
+        // DoNotOptimize(c = depth + reinterpret_cast<uint64_t>(p));
+        // asm volatile("" : : "r,m"(c) : "memory");
       }
       return RobFunroller<depth + 1>::generate(baseline, p);
     } else {
