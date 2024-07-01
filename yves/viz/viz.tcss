@@ -1,0 +1,13 @@
+#plot-list{
+   
+    
+  
+ 
+    dock: left;
+    max-width: 20%;
+}
+
+
+#plotter {
+    
+}
