@@ -124,6 +124,18 @@ template <uint64_t seed> struct CTRandomStream<0, seed> {
 };
 } // namespace Dynlec
 
+template <class Tp> inline void DoNotOptimize(Tp const &value) {
+  asm volatile("" : : "r,m"(value) : "memory");
+}
+
+template <class Tp> inline void DoNotOptimize(Tp &value) {
+#if defined(__clang__)
+  asm volatile("" : "+r,m"(value) : : "memory");
+#else
+  asm volatile("" : "+m,r"(value) : : "memory");
+#endif
+}
+
 constexpr auto RSS_AS_KB = RSS * 1024 / sizeof(uint64_t);
 
 constexpr void randomize(uint64_t *indices, uint64_t len) {
@@ -175,7 +187,9 @@ struct RobFunroller {
     }
     if constexpr (depth < OPS_PER_MISS) {
       if constexpr (depth != 0) {
-        asm volatile(INST_CONTENT);
+
+        uint64_t a;
+        DoNotOptimize(4 + 4);
       }
       return RobFunroller<depth + 1>::generate(baseline, p);
     } else {

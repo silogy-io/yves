@@ -3,6 +3,18 @@ from dataclasses import dataclass
 from pysmelt.interfaces.analysis import IQL, TestResult
 import json
 
+from dataclasses import dataclass
+from typing import List
+
+
+@dataclass
+class ExperimentGraph:
+    name: str
+    x_label: str
+    y_label: str
+    x_values: List[int]
+    y_values: List[int]
+
 
 @dataclass(frozen=True)
 class PerformanceCounters:

@@ -84,7 +84,10 @@ for potential_structure_size in potential_structure_sizes:
         name=f"{potential_structure_size}_rob_capacity_mac",
         profiler_path=profiler_bin,
         benchmark_path=rob_bench_bin,
-        metadata={"TOTAL_MISSES": 4 * TOTAL_ITER},
+        metadata={
+            "TOTAL_MISSES": 4 * TOTAL_ITER,
+            "TESTED_SIZE": potential_structure_size,
+        },
     )
     rob_chase_tests.append(bench.as_ref)
 test_group(name="rob_capacity_sweep", tests=rob_chase_tests)
