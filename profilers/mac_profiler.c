@@ -926,6 +926,7 @@ usize counter_map[KPC_MAX_COUNTERS] = {0};
 u64 counters_0[KPC_MAX_COUNTERS] = {0};
 u64 counters_1[KPC_MAX_COUNTERS] = {0};
 
+// timestamps for calculating wall time
 uint64_t start_ts = 0;
 uint64_t end_ts = 0;
 
@@ -1081,16 +1082,6 @@ char *create_counter_str(void) {
 
   size_t index = 0;
 
-  mach_timebase_info_data_t info;
-  mach_timebase_info(&info);
-
-  /* convert to nanoseconds */
-  end_ts = mach_absolute_time();
-
-  uint64_t ts = start_ts - end_ts;
-  ts *= info.numer;
-  ts /= info.denom;
-
   cJSON *top = cJSON_CreateObject();
   if (top == NULL) {
     goto end;
@@ -1113,6 +1104,21 @@ char *create_counter_str(void) {
     }
     cJSON_AddItemToObject(top, name, counter_val);
   }
+  /* convert to nanoseconds */
+  end_ts = mach_absolute_time();
+
+  mach_timebase_info_data_t info;
+  mach_timebase_info(&info);
+
+  uint64_t ts = end_ts - start_ts;
+  ts *= info.numer;
+  ts /= info.denom;
+
+  counter_val = cJSON_CreateNumber(ts);
+  if (counter_val == NULL) {
+    goto end;
+  }
+  cJSON_AddItemToObject(top, "walltime_ns", counter_val);
 
   string = cJSON_Print(top);
   if (string == NULL) {
@@ -1125,7 +1131,7 @@ end:
 }
 
 void __attribute__((destructor)) run_me_at_unload() {
-
+  end_ts = mach_absolute_time();
   int ret = 0;
 
   // get counters after
