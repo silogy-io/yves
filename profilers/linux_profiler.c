@@ -1,5 +1,6 @@
 
 #include "cJSON.h"
+#include "time.h"
 #include <asm/unistd.h>
 #include <linux/limits.h>
 #include <linux/perf_event.h>
@@ -9,7 +10,7 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
-
+struct timespec start, stop;
 static long perf_event_open(struct perf_event_attr *hw_event, pid_t pid,
                             int cpu, int group_fd, unsigned long flags) {
   int ret;
@@ -30,6 +31,8 @@ static const linux_event_alias profile_events[] = {
 
     {"branches", PERF_COUNT_HW_BRANCH_INSTRUCTIONS},
     {"branch-misses", PERF_COUNT_HW_BRANCH_MISSES},
+    // not portable, tragically
+    //{"walltime", PERF_COUNT_SW_TASK_CLOCK}
 
 };
 
@@ -63,6 +66,11 @@ void __attribute__((constructor)) run_me_at_load_time() {
     ioctl(fd[i], PERF_EVENT_IOC_RESET, 0);
     ioctl(fd[i], PERF_EVENT_IOC_ENABLE, 0);
   }
+
+  if (clock_gettime(CLOCK_REALTIME, &start) == -1) {
+    fprintf(stderr, "clock gettime failed at the start");
+    exit(EXIT_FAILURE);
+  }
 }
 
 char *create_counter_str(void) {
@@ -81,6 +89,17 @@ char *create_counter_str(void) {
     read(fd[i], &count[i], sizeof(long long));
     close(fd[i]);
   }
+
+  if (clock_gettime(CLOCK_REALTIME, &stop) == -1) {
+    fprintf(stderr, "clock gettime failed at the end of profiling");
+    exit(EXIT_FAILURE);
+  }
+
+  int64_t interval_ns = 0;
+
+  interval_ns =
+      (stop.tv_sec - start.tv_sec) * 1e9; // Convert seconds to nanoseconds
+  interval_ns += (stop.tv_nsec - start.tv_nsec); // Add the nanosecond part
 
   cJSON *top = cJSON_CreateObject();
   if (top == NULL) {
@@ -103,6 +122,12 @@ char *create_counter_str(void) {
     }
     cJSON_AddItemToObject(top, name, counter_val);
   }
+
+  counter_val = cJSON_CreateNumber(interval_ns);
+  if (counter_val == NULL) {
+    goto end;
+  }
+  cJSON_AddItemToObject(top, "walltime_ns", counter_val);
 
   string = cJSON_Print(top);
   if (string == NULL) {
