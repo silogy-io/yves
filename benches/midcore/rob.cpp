@@ -20,7 +20,7 @@
 //
 // Useful for tuning the ratio of the behaviour under load to the loop backedge
 #ifndef OPS_PER_MISS
-#define OPS_PER_MISS 8
+#define OPS_PER_MISS 64
 #endif
 
 #define RUNTIME_INIT_SIZE 1024
@@ -164,17 +164,6 @@ template <uint64_t size> struct RandomPtrChase {
   }
 };
 
-template <uint64_t size> struct RuntimeRandomPtrChase {
-  uint64_t *payload;
-  RuntimeRandomPtrChase() {
-    payload = new uint64_t[size];
-    for (auto i = 0; i < size; i++) {
-      payload[i] = i;
-    }
-    randomize(payload, size);
-  }
-  ~RuntimeRandomPtrChase() { delete[] payload; }
-};
 
 template <uint64_t depth>
 // explicit load unroller
@@ -183,7 +172,7 @@ struct RobFunroller {
                                            const volatile uint64_t *p) {
     if constexpr (depth == 0) {
       p = reinterpret_cast<const volatile uint64_t *>(
-          reinterpret_cast<uint64_t>(baseline) + *(p) + 64);
+          reinterpret_cast<uint64_t>(baseline) + *(p));
     }
     if constexpr (depth < OPS_PER_MISS) {
       if constexpr (depth != 0) {
@@ -203,8 +192,11 @@ struct RobFunroller {
 int main() {
 #if RSS < RUNTIME_INIT_SIZE
   constexpr auto array = RandomPtrChase<RSS_AS_KB>();
+  constexpr auto array2 = RandomPtrChase<RSS_AS_KB>();
   const volatile uint64_t *p = &array.payload[0];
   const volatile uint64_t *baseline = &array.payload[0];
+
+
 #else
   auto array = new uint64_t[RSS_AS_KB];
   randomize(array, RSS_AS_KB);

@@ -904,42 +904,6 @@ static kpep_event *get_event(kpep_db *db, const event_alias *alias) {
   }
   return NULL;
 }
-
-// -----------------------------------------------------------------------------
-// Demo 1: profile a function in current thread
-// -----------------------------------------------------------------------------
-
-static void profile_func(void) {
-  for (u32 i = 0; i < 100000; i++) {
-    u32 r = arc4random();
-    if (r % 2)
-      arc4random();
-  }
-}
-
-// -----------------------------------------------------------------------------
-// Demo 2: profile a select process
-// -----------------------------------------------------------------------------
-
-/// Target process pid, -1 for all thread.
-static int target_pid = -1;
-
-/// Profile time in seconds.
-static double total_profile_time = 0.1;
-
-/// Profile sampler period in seconds (default 10ms).
-static double sample_period = 0.001;
-
-static double get_timestamp(void) {
-  struct timeval now;
-  gettimeofday(&now, NULL);
-  return (double)now.tv_sec + (double)now.tv_usec / (1000.0 * 1000.0);
-}
-
-// debugid sub-classes and code from xnu source
-#define PERF_KPC (6)
-#define PERF_KPC_DATA_THREAD (8)
-
 /////////////////////////////////
 // Color Constants
 /////////////////////////////////
@@ -962,7 +926,15 @@ usize counter_map[KPC_MAX_COUNTERS] = {0};
 u64 counters_0[KPC_MAX_COUNTERS] = {0};
 u64 counters_1[KPC_MAX_COUNTERS] = {0};
 
+uint64_t start_ts = 0;
+uint64_t end_ts = 0;
+
 void __attribute__((constructor)) run_me_at_load_time() {
+  /* get timer units */
+
+  /* get timer value */
+  start_ts = mach_absolute_time();
+
   /////////////////////////////////////////////////////////
   // This function will run at load time because of the
   // __attribute__((constructor)) in the function
@@ -1108,6 +1080,16 @@ char *create_counter_str(void) {
   cJSON *counter_val = NULL;
 
   size_t index = 0;
+
+  mach_timebase_info_data_t info;
+  mach_timebase_info(&info);
+
+  /* convert to nanoseconds */
+  end_ts = mach_absolute_time();
+
+  uint64_t ts = start_ts - end_ts;
+  ts *= info.numer;
+  ts /= info.denom;
 
   cJSON *top = cJSON_CreateObject();
   if (top == NULL) {
