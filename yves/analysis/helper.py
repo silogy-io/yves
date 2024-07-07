@@ -16,11 +16,17 @@ class ExperimentGraph:
     y_values: List[int]
 
 
+def find_edges(lst: List[float], edge_size: float = 2.0) -> List[int]:
+    return [i for i in range(len(lst) - 1) if lst[i + 1] >= edge_size * lst[i]]
+
+
 @dataclass(frozen=True)
 class PerformanceCounters:
     ctrs: Dict[str, int]
     CYCLES: ClassVar[str] = "cycles"
     INSTRUCTIONS: ClassVar[str] = "instructions"
+    BRANCHES: ClassVar[str] = "branches"
+    BRANCH_MISSES: ClassVar[str] = "branch-misses"
 
     @property
     def ipc(self) -> float:
@@ -28,6 +34,20 @@ class PerformanceCounters:
         Instructions per cycle -- fundamental description of bandwidth
         """
         return self.ctrs[self.INSTRUCTIONS] / self.ctrs[self.CYCLES]
+
+    @property
+    def branch_misprediction_rate(self) -> float:
+        """
+        percent of branches that are mispredicted -- should be a value between zero and one
+
+
+        1.5 is returned instead of a NaN, because sometimes the branch stat is messed up on mac
+        """
+        try:
+            mispred_rate = self.ctrs[self.BRANCH_MISSES] / self.ctrs[self.BRANCHES]
+        except ZeroDivisionError:
+            mispred_rate = -0.2
+        return mispred_rate
 
     @property
     def cpi(self) -> float:

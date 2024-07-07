@@ -1,4 +1,4 @@
-from typing import ClassVar, Dict, List
+from typing import Any, ClassVar, Dict, List, Tuple
 from pysmelt.interfaces.analysis import IQL, TestResult
 import json
 
@@ -14,9 +14,10 @@ from yves.viz.viz import YvesViz
 iql = IQL.from_previous()
 
 
-def memory_analysis(iql: IQL) -> List[ExperimentGraph]:
+def memory_analysis(iql: IQL) -> Tuple[List[ExperimentGraph], Dict[str, Any]]:
     next_line_tests = iql.get_tests_from_testgroup("next_line_pointer_chase_tests")
     experiments = []
+    observed_values = {}
     if next_line_tests:
         cpa = []
         x_axis = []
@@ -80,10 +81,10 @@ def memory_analysis(iql: IQL) -> List[ExperimentGraph]:
         )
     else:
         pass
-    return experiments
+    return experiments, observed_values
 
 
 if __name__ == "__main__":
     iql = IQL.from_previous()
-    rv = memory_analysis(iql)
-    YvesViz(rv).run()
+    rv, observed = memory_analysis(iql)
+    YvesViz(rv, observed).run()

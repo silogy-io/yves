@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Union
+from typing import Any, Dict, List, Union
 from textual.app import App, ComposeResult, events, on
 from textual.containers import Container, VerticalScroll
 from textual.widgets import (
@@ -15,6 +15,23 @@ from textual.widgets import (
 from textual_plotext import PlotextPlot
 from yves.analysis.helper import ExperimentGraph
 from rich.table import Table
+
+
+class ObservedValueTable(Static):
+    def __init__(self, observed_values: Dict[str, Any]):
+        self.experiment = observed_values
+        super().__init__()
+
+    def on_mount(self) -> None:
+        table = Table("Value name", "Value")
+        table.title = "Derived values from experiments"
+        for (
+            x,
+            y,
+        ) in self.experiment.items():
+
+            table.add_row(f"{x} ", f"{y} ")
+        self.update(table)
 
 
 class ExperimentAsTable(Static):
@@ -40,9 +57,13 @@ class ExperimentAsTable(Static):
 class YvesViz(App):
     CSS_PATH = "viz.tcss"
 
-    def __init__(self, experiments: List[ExperimentGraph]):
+    def __init__(
+        self, experiments: List[ExperimentGraph], observed_values: Dict[str, Any] = {}
+    ):
         super().__init__()
         self.experiments = experiments
+        # random observed values -- we add this as the first table in the table page
+        self.observed_values = observed_values
 
     def action_show_tab(self, tab: str) -> None:
         """Switch to a new tab."""
@@ -65,6 +86,8 @@ class YvesViz(App):
                     yield PlotextPlot(id="plotter")
             with TabPane("tables", id="jessica"):
                 with VerticalScroll():
+                    if self.observed_values:
+                        yield ObservedValueTable(self.observed_values)
                     for exp in self.experiments:
                         yield ExperimentAsTable(exp)
 

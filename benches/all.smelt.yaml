@@ -4,3 +4,4 @@
     tests:
       - //benches/memory/loadtouse_tl.py:all_mem_tests
       - //benches/midcore/bandwidths_etc.py:all_mc_tests
+      - //benches/frontend/frontend_tl.py:all_frontend_tests
