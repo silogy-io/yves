@@ -12,7 +12,7 @@ from yves.analysis.helper import (
 from yves.viz.viz import YvesViz
 
 
-def frontend(iql: IQL) -> Tuple[List[ExperimentGraph], Dict[str, Any]]:
+def frontend_analysis(iql: IQL) -> Tuple[List[ExperimentGraph], Dict[str, Any]]:
     next_line_tests = iql.get_tests_from_testgroup("directional_branch_history_sweep")
     experiments = []
     derived_values = {}
@@ -76,5 +76,5 @@ def frontend(iql: IQL) -> Tuple[List[ExperimentGraph], Dict[str, Any]]:
 
 if __name__ == "__main__":
     iql = IQL.from_previous()
-    rv, observed = frontend(iql)
+    rv, observed = frontend_analysis(iql)
     YvesViz(rv, observed).run()

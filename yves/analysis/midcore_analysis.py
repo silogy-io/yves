@@ -1,4 +1,4 @@
-from typing import ClassVar, Dict, List
+from typing import Any, ClassVar, Dict, List, Tuple
 from pysmelt.interfaces.analysis import IQL, TestResult
 import json
 from yves.analysis.helper import (
@@ -10,9 +10,10 @@ from yves.analysis.helper import (
 from yves.viz.viz import YvesViz
 
 
-def midcore_analysis(iql: IQL) -> List[ExperimentGraph]:
+def midcore_analysis(iql: IQL) -> Tuple[List[ExperimentGraph], Dict[str, Any]]:
     rob_tests = iql.get_tests_from_testgroup("rob_capacity_sweep")
     exps = []
+    derived_values = {}
     if rob_tests:
         x = []
         y = []
@@ -36,11 +37,10 @@ def midcore_analysis(iql: IQL) -> List[ExperimentGraph]:
 
     else:
         pass
-    return exps
+    return exps, derived_values
 
 
 if __name__ == "__main__":
     iql = IQL.from_previous()
-    rv = midcore_analysis(iql)
-    print(rv)
-    YvesViz(rv).run()
+    rv, derived_values = midcore_analysis(iql)
+    YvesViz(rv, derived_values).run()
