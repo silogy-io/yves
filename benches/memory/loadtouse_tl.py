@@ -1,8 +1,16 @@
 from pysmelt.interfaces.procedural import import_as_target
 from pysmelt.default_targets import test_group
+from pysmelt.generators.procedural import init_local_rules
 
-from yves.rules.compile import compile_local_ubench_zig
-from yves.rules.profiler import local_benchmark
+
+try:
+    from yves.rules.compile import compile_local_ubench_zig
+    from yves.rules.profiler import local_benchmark
+except Exception as _:
+    init_local_rules()
+    from compile import compile_local_ubench_zig
+    from profiler import local_benchmark
+
 
 cpp_compiler = import_as_target("//download_zig.smelt.yaml:cpp_compiler")
 profile_obj = import_as_target("//profilers/buildprof.smelt.yaml:profiler")
