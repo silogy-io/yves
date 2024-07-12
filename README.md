@@ -82,8 +82,4 @@ Each benchmark is written as a "template" that has preprocessor defines that can
 
 ### Compilers
 
-By default, all benchmarks and profilers are compiled via zig 0.13.0, using the cc / c++ compiuler functionality. I will bring up support for other compilers via godbolt if anyone asks.
-
-### Test instantiation and execution
-
-We declare
+By default, all benchmarks and profilers are compiled via zig 0.13.0, using the cc / c++ compiler functionality. I will bring up support for other compilers via godbolt if anyone asks.
