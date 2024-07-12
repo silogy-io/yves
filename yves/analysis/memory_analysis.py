@@ -34,6 +34,9 @@ def memory_analysis(iql: IQL) -> Tuple[List[ExperimentGraph], Dict[str, Any]]:
                 y_label="cycles per access",
                 x_values=x_axis,
                 y_values=cpa,
+                description="next cache line ptr chase sweep -- x axis is the working set size of the ptr chase, y axis is cycle latency for each load"
+                "any cpu worth its salt will capture this pattern with prefetchers"
+                "early on in these experiments, iteration count is too low, and explains why cpi dips below the expected load to use latency",
             )
         )
 
@@ -56,6 +59,9 @@ def memory_analysis(iql: IQL) -> Tuple[List[ExperimentGraph], Dict[str, Any]]:
                 y_label="cycles per access",
                 x_values=x_axis,
                 y_values=cpa,
+                description="random ptr chase sweep -- x axis is the working set size of the ptr chase, y axis is cycle latency for each load"
+                "the steep increases in on the y axis as x increases should inform when a new level of cache is being hit"
+                "that x value is the approximate size of the cash -- x values are in kilobytes",
             )
         )
     else:
@@ -77,6 +83,9 @@ def memory_analysis(iql: IQL) -> Tuple[List[ExperimentGraph], Dict[str, Any]]:
                 y_label="cycles per access",
                 x_values=x_axis,
                 y_values=cpa,
+                description="similar to the next line pointer chase, but stride size is 4096 bytes -- often the page size for many systems"
+                "this test sweep sweeps across accessing an increasing number of pages -- hopefully it would illuminate tlb size and miss latency, even with prefetching"
+                "this sweep needs to be investigated",
             )
         )
     else:

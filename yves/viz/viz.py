@@ -1,7 +1,10 @@
 from dataclasses import dataclass
 from typing import Any, Dict, List, Union
+from rich.text import Text, TextType
 from textual.app import App, ComposeResult, events, on
-from textual.containers import Container, VerticalScroll
+from textual.containers import Container, VerticalScroll, Vertical, Horizontal
+from textual.reactive import reactive
+from textual.widget import Widget
 from textual.widgets import (
     Footer,
     Header,
@@ -35,7 +38,6 @@ class ObservedValueTable(Static):
 
 
 class ExperimentAsTable(Static):
-
     def __init__(self, experiment: ExperimentGraph):
         self.experiment = experiment
         super().__init__()
@@ -47,11 +49,19 @@ class ExperimentAsTable(Static):
             x,
             y,
         ) in zip(self.experiment.x_values, self.experiment.y_values):
-
             table.add_row(
                 f"{x} {self.experiment.x_label}", f"{y} {self.experiment.y_label}"
             )
         self.update(table)
+
+
+class Description(Widget):
+    """Generates a greeting."""
+
+    desc = reactive("")
+
+    def render(self) -> str:
+        return f"{self.desc}"
 
 
 class YvesViz(App):
@@ -64,6 +74,7 @@ class YvesViz(App):
         self.experiments = experiments
         # random observed values -- we add this as the first table in the table page
         self.observed_values = observed_values
+        self.selected_text = reactive("Hey")
 
     def action_show_tab(self, tab: str) -> None:
         """Switch to a new tab."""
@@ -74,14 +85,18 @@ class YvesViz(App):
         yield Footer()
         with TabbedContent(initial="graphs"):
             with TabPane("graphs", id="graphs"):
-                with Container():
-                    yield ListView(
-                        *[
-                            ListItem(Label(experiment.name), id=f"exp-{idx}")
-                            for idx, experiment in enumerate(self.experiments)
-                        ],
+                with Horizontal():
+                    with Vertical(
                         id="plot-list",
-                    )
+                    ):
+                        yield ListView(
+                            *[
+                                ListItem(Label(experiment.name), id=f"exp-{idx}")
+                                for idx, experiment in enumerate(self.experiments)
+                            ],
+                            id="listview",
+                        )
+                        yield Description(id="desc")
 
                     yield PlotextPlot(id="plotter")
             with TabPane("tables", id="jessica"):
@@ -91,12 +106,15 @@ class YvesViz(App):
                     for exp in self.experiments:
                         yield ExperimentAsTable(exp)
 
-    @on(ListView.Selected, "#plot-list")
+    @on(ListView.Selected, "#listview")
     def new_graph(self, message_type: ListView.Selected):
 
         idx = int(message_type.item.id.split("-")[-1])
         plot_data = self.experiments[idx]
 
+        self.query_one(Description).desc = (
+            plot_data.description if plot_data.description else ""
+        )
         var = self.query_one("#plotter", expect_type=PlotextPlot)
         plt = var.plt
         plt.clear_data()

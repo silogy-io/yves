@@ -1,4 +1,4 @@
-from typing import Any, ClassVar, Dict
+from typing import Any, ClassVar, Dict, Optional
 from dataclasses import dataclass
 from pysmelt.interfaces.analysis import IQL, TestResult
 import json
@@ -14,6 +14,7 @@ class ExperimentGraph:
     y_label: str
     x_values: List[str]
     y_values: List[int]
+    description: Optional[str] = None
 
 
 def find_edges(lst: List[float], edge_size: float = 2.0) -> List[int]:

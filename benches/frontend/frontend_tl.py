@@ -1,8 +1,14 @@
 from pysmelt.interfaces.procedural import import_as_target
 from pysmelt.default_targets import test_group
 
-from yves.rules.compile import compile_local_ubench_zig
-from yves.rules.profiler import local_benchmark
+
+from pysmelt.generators.procedural import init_local_rules
+
+
+init_local_rules()
+from compile import compile_local_ubench_zig
+from profiler import local_benchmark
+
 
 cpp_compiler = import_as_target("//download_zig.smelt.yaml:cpp_compiler")
 profile_obj = import_as_target("//profilers/buildprof.smelt.yaml:profiler")
@@ -50,7 +56,6 @@ for size in per_branch_histories:
         name=f"directional_branch_history_{size}_local",
         profiler_path=profiler_bin,
         benchmark_path=bench_bin,
-        # this is in kb, so number of
         metadata={
             "BRANCHES_OBSERVED": size * num_branches * bhist_iterations,
             "HISTORY": size,

@@ -1,4 +1,4 @@
-from typing import ClassVar, Dict, List
+from typing import Any, ClassVar, Dict, List, Tuple
 from pysmelt.interfaces.analysis import IQL, TestResult
 import json
 from yves.analysis.helper import (
@@ -10,9 +10,10 @@ from yves.analysis.helper import (
 from yves.viz.viz import YvesViz
 
 
-def midcore_analysis(iql: IQL) -> List[ExperimentGraph]:
+def midcore_analysis(iql: IQL) -> Tuple[List[ExperimentGraph], Dict[str, Any]]:
     rob_tests = iql.get_tests_from_testgroup("rob_capacity_sweep")
     exps = []
+    derived_values = {}
     if rob_tests:
         x = []
         y = []
@@ -31,16 +32,22 @@ def midcore_analysis(iql: IQL) -> List[ExperimentGraph]:
                 y_label="cycles per access",
                 x_values=x,
                 y_values=y,
+                description="a test sweep targetting rob capacity, first described here https://blog.stuffedcow.net/2013/05/measuring-rob-capacity/"
+                "there are two indepdent, random pointer chases going on, followed by a number of noops. it is designed such that each load will always miss and go to memory"
+                "x axis is number of noops after a load miss"
+                "y axis is the cycle latency per load miss\n\n"
+                "when x ~= rob size, we should see a should see a spike in the y axis, as the two indepdent loads can no longer execute in parallel\n\n"
+                "unfortunately, modern prefetchers have gotten _so_ good that the loads don't miss on some processors (mac m3, for example)\n\n"
+                "this benchmark should be revisited to come up with a different 'long latency instruction'",
             )
         )
 
     else:
         pass
-    return exps
+    return exps, derived_values
 
 
 if __name__ == "__main__":
     iql = IQL.from_previous()
-    rv = midcore_analysis(iql)
-    print(rv)
-    YvesViz(rv).run()
+    rv, derived_values = midcore_analysis(iql)
+    YvesViz(rv, derived_values).run()
